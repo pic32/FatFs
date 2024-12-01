@@ -6,20 +6,15 @@
 /* This is an example of glue functions to attach various exsisting      */
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
-#include <string.h>
-#include <stdio.h>
 
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
-#include "GenericTypes.h"
 
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
 #define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
 #define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
 
-FILE *gDiskContentsFile = NULL;
-BYTE gRAMBuffer[1024 * 1024 * 32];
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -29,16 +24,31 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
-	switch (pdrv) 
-	{
-		case DEV_RAM :
-		{
-			// translate the reslut code here
+	DSTATUS stat;
+	int result;
 
-			return 0;
-		}
+	switch (pdrv) {
+	case DEV_RAM :
+		result = RAM_disk_status();
+
+		// translate the reslut code here
+
+		return stat;
+
+	case DEV_MMC :
+		result = MMC_disk_status();
+
+		// translate the reslut code here
+
+		return stat;
+
+	case DEV_USB :
+		result = USB_disk_status();
+
+		// translate the reslut code here
+
+		return stat;
 	}
-
 	return STA_NOINIT;
 }
 
@@ -52,54 +62,31 @@ DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	switch (pdrv)
-	{
-		case DEV_RAM:
-		{
-			if (gDiskContentsFile != NULL)
-				return 0;
+	DSTATUS stat;
+	int result;
 
-			// open the file, this assumes it exists
-			gDiskContentsFile = fopen("Disk.txt", "r+");
+	switch (pdrv) {
+	case DEV_RAM :
+		result = RAM_disk_initialize();
 
-			if (gDiskContentsFile == NULL)
-			{
-				// we must make the file
-				gDiskContentsFile = fopen("Disk.txt", "w+");
+		// translate the reslut code here
 
-				if (gDiskContentsFile == NULL)
-				{
-					// error 
-					return STA_NOINIT;
-				}
+		return stat;
 
-				// now initialize the contents, make it look like flash
-				memset(gRAMBuffer, 0xFF, sizeof(gRAMBuffer));
+	case DEV_MMC :
+		result = MMC_disk_initialize();
 
-				if (fwrite(gRAMBuffer, 1, sizeof(gRAMBuffer), gDiskContentsFile) != sizeof(gRAMBuffer))
-				{
-					// some kind of disk error
-					fclose(gDiskContentsFile);
+		// translate the reslut code here
 
-					// error 
-					return STA_NOINIT;
-				}
+		return stat;
 
-				// now go back to the beginning
-				if (fseek(gDiskContentsFile, 0, SEEK_SET) != 0)
-				{
-					// some kind of disk error
-					fclose(gDiskContentsFile);
+	case DEV_USB :
+		result = USB_disk_initialize();
 
-					// error 
-					return STA_NOINIT;
-				}
-			}
+		// translate the reslut code here
 
-			return 0;
-		}
+		return stat;
 	}
-
 	return STA_NOINIT;
 }
 
@@ -116,39 +103,36 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	switch (pdrv)
-	{
-		case DEV_RAM:
-		{
-			UINT32 i;
+	DRESULT res;
+	int result;
 
-			for (i = 0; i < count; i++)
-			{
-				if (fseek(gDiskContentsFile, (sector + i) * 512, SEEK_SET) != 0)
-				{
-					// some kind of disk error
-					fclose(gDiskContentsFile);
+	switch (pdrv) {
+	case DEV_RAM :
+		// translate the arguments here
 
-					// error 
-					return RES_ERROR;
-				}
+		result = RAM_disk_read(buff, sector, count);
 
-				if (fread(buff, 1, 512, gDiskContentsFile) != 512)
-				{
-					// some kind of disk error
-					fclose(gDiskContentsFile);
+		// translate the reslut code here
 
-					// error 
-					return RES_ERROR;
-				}
+		return res;
 
-				buff += 512;
-			}
+	case DEV_MMC :
+		// translate the arguments here
 
-			// translate the reslut code here
+		result = MMC_disk_read(buff, sector, count);
 
-			return RES_OK;
-		}
+		// translate the reslut code here
+
+		return res;
+
+	case DEV_USB :
+		// translate the arguments here
+
+		result = USB_disk_read(buff, sector, count);
+
+		// translate the reslut code here
+
+		return res;
 	}
 
 	return RES_PARERR;
@@ -169,38 +153,36 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	switch (pdrv)
-	{
-		case DEV_RAM:
-		{
-			UINT32 i;
+	DRESULT res;
+	int result;
 
-			for (i = 0; i < count; i++)
-			{
-				// go to the sector
-				if (fseek(gDiskContentsFile, (sector + i) * 512, SEEK_SET) != 0)
-				{
-					// some kind of disk error
-					fclose(gDiskContentsFile);
+	switch (pdrv) {
+	case DEV_RAM :
+		// translate the arguments here
 
-					// error 
-					return RES_ERROR;
-				}
+		result = RAM_disk_write(buff, sector, count);
 
-				if (fwrite(buff, 1, 512, gDiskContentsFile) != 512)
-				{
-					// some kind of disk error
-					fclose(gDiskContentsFile);
+		// translate the reslut code here
 
-					// error 
-					return RES_ERROR;
-				}
+		return res;
 
-				buff += 512;
-			}
+	case DEV_MMC :
+		// translate the arguments here
 
-			return RES_OK;
-		}
+		result = MMC_disk_write(buff, sector, count);
+
+		// translate the reslut code here
+
+		return res;
+
+	case DEV_USB :
+		// translate the arguments here
+
+		result = USB_disk_write(buff, sector, count);
+
+		// translate the reslut code here
+
+		return res;
 	}
 
 	return RES_PARERR;
@@ -219,36 +201,29 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	DRESULT res = RES_PARERR;
+	DRESULT res;
+	int result;
 
-	switch (pdrv)
-	{
-		case DEV_RAM:
-		{
-			switch (cmd)
-			{
-				case CTRL_SYNC:			/* Nothing to do */
-					res = RES_OK;
-					break;
+	switch (pdrv) {
+	case DEV_RAM :
 
-				case GET_SECTOR_COUNT:	/* Get number of sectors on the drive */
-					*(LBA_t*)buff = sizeof(gRAMBuffer);
-					res = RES_OK;
-					break;
+		// Process of the command for the RAM drive
 
-				case GET_SECTOR_SIZE:	/* Get size of sector for generic read/write */
-					*(WORD*)buff = 1024;
-					res = RES_OK;
-					break;
+		return res;
 
-				case GET_BLOCK_SIZE:	/* Get internal block size in unit of sector */
-					*(DWORD*)buff = 4096;
-					res = RES_OK;
-					break;
-			}
-		}
+	case DEV_MMC :
+
+		// Process of the command for the MMC/SD card
+
+		return res;
+
+	case DEV_USB :
+
+		// Process of the command the USB drive
+
+		return res;
 	}
 
-	return res;
+	return RES_PARERR;
 }
 
